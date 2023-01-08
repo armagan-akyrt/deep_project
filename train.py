@@ -7,6 +7,35 @@ import os
 import re
 import argparse
 
+
+model_checkpoint = "Helsinki-NLP/opus-mt-tr-en"
+
+if model_checkpoint in ["t5-small", "t5-base", "t5-larg", "t5-3b", "t5-11b"]:
+    prefix = "translate Turkish to English: "
+else:
+    prefix = ""
+    
+max_input_length = 128
+max_target_length = 128
+source_lang = "tr"
+target_lang = "en"
+
+raw_datasets = load_dataset("wmt16", "tr-en")
+    
+    
+metric = load_metric("sacrebleu")
+
+print(raw_datasets["test"][0])
+
+tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+
+if "mbart" in model_checkpoint:
+    tokenizer.tgt_lang = "en-XX"
+    tokenizer.src_lang = "tr_TR"
+        
+        
+
+
 def preprocess_function(examples):
     inputs = [prefix + ex[source_lang] for ex in examples["translation"]]
     targets = [ex[target_lang] for ex in examples["translation"]]
@@ -52,37 +81,8 @@ def compute_metrics(eval_preds):
 
 
 def train_model(model_save_path, dataset_path, num_train_epoch):
-    model_checkpoint = "Helsinki-NLP/opus-mt-tr-en"
-    if len(dataset_path) > 0:
-        
-        extension = dataset_path.split(".")
-        
-        raw_datasets = load_dataset(extension[1], dataset_path)
     
-    else:
-        raw_datasets = load_dataset("wmt16", "tr-en")
-        
-        
-    metric = load_metric("sacrebleu")
-
-    print(raw_datasets["test"][0])
-
-    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-
-    if "mbart" in model_checkpoint:
-        tokenizer.tgt_lang = "en-XX"
-        tokenizer.src_lang = "tr_TR"
-        
-        
-    if model_checkpoint in ["t5-small", "t5-base", "t5-larg", "t5-3b", "t5-11b"]:
-        prefix = "translate Turkish to English: "
-    else:
-        prefix = ""
-
-    max_input_length = 128
-    max_target_length = 128
-    source_lang = "tr"
-    target_lang = "en"
+    
 
     tokenized_datasets = raw_datasets.map(preprocess_function, batched=True)
 
@@ -125,7 +125,7 @@ def train_model(model_save_path, dataset_path, num_train_epoch):
 def main():
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('--model_save_path', default="/", type=str)
+    parser.add_argument('--model_save_path', default=os.getcwd(), type=str)
     parser.add_argument('--dataset_path', default="", type=str)
     parser.add_argument('--num_train_epoch', default=1, type=int)
     args = vars(parser.parse_args())
