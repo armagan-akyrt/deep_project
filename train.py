@@ -6,7 +6,15 @@ import numpy as np
 import os
 import re
 import argparse
+import time
 
+parser = argparse.ArgumentParser()
+    
+parser.add_argument('--model_save_path', default=os.getcwd(), type=str)
+parser.add_argument('--dataset_path', default="", type=str)
+parser.add_argument('--num_train_epoch', default=1, type=int)
+args = vars(parser.parse_args())
+print(f"Arguments {args}")
 
 model_checkpoint = "Helsinki-NLP/opus-mt-tr-en"
 
@@ -20,8 +28,15 @@ max_target_length = 128
 source_lang = "tr"
 target_lang = "en"
 
-raw_datasets = load_dataset("wmt16", "tr-en")
-    
+if len(args["dataset_path"]) == 0:
+    raw_datasets = load_dataset("wmt16", "tr-en")
+    print("Online dataset")
+
+else:
+    data_files={"test": args["dataset_path"] + "/data_test.json", "train": args["dataset_path"] + "/data_train.json", "validation": args["dataset_path"] + "/data_validation.json"}
+    raw_datasets = load_dataset("json", data_files=data_files)
+    print("Local dataset")
+
     
 metric = load_metric("sacrebleu")
 
@@ -32,6 +47,8 @@ tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 if "mbart" in model_checkpoint:
     tokenizer.tgt_lang = "en-XX"
     tokenizer.src_lang = "tr_TR"
+    
+
         
         
 
@@ -123,13 +140,7 @@ def train_model(model_save_path, dataset_path, num_train_epoch):
     return trainer
 
 def main():
-    parser = argparse.ArgumentParser()
     
-    parser.add_argument('--model_save_path', default=os.getcwd(), type=str)
-    parser.add_argument('--dataset_path', default="", type=str)
-    parser.add_argument('--num_train_epoch', default=1, type=int)
-    args = vars(parser.parse_args())
-    print(f"Arguments {args}")
     train_model(model_save_path=args['model_save_path'], dataset_path=args['dataset_path'], num_train_epoch=args['num_train_epoch'])
     
 main()
