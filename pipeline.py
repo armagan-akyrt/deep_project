@@ -1,18 +1,20 @@
 from transformers import pipeline, MarianMTModel, MarianTokenizer
 import sys
+import os
 import argparse
 
 def main():
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('--model_load_path', default="opus-mt-tr-en-finetuned-tr-to-en/checkpoint-12500", type=str)
+    parser.add_argument('--model_load_path', default=os.getcwd(), type=str)
     parser.add_argument('--input_file', default="input.txt", type=str)
     parser.add_argument('--output_file', default="output.txt", type=str)
+    parser.add_argument('--checkpoint', default=1000, type=str)
     
     args = vars(parser.parse_args())
     
     inp = open(args['input_file'], "r")
-    model_path = args['model_load_path']
+    model_path = args['model_load_path'] + "/opus-mt-tr-en-finetuned-tr-to-en/checkpoint-" + args['checkpoint']
     model = MarianMTModel.from_pretrained(model_path)   # loads the model
     tokenizer = MarianTokenizer.from_pretrained(model_path) # tokenizes the model
 
